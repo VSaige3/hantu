@@ -1,0 +1,10 @@
+[submodule "lib/coregui"]
+	path = lib/coregui
+	url = https://github.com/torphedo/coregui
+[submodule "lib/bobtail"]
+	path = lib/bobtail
+	url = https://github.com/torphedo/bobtail
+[submodule "lib/imgui"]
+	path = lib/imgui
+	url = https://github.com/ocornut/imgui
+	branch = docking
