@@ -29,6 +29,7 @@ add_subdirectory(lib/bobtail)
 
 add_executable(hantu
     src/main.cxx
+    src/hantu.cxx
 )
 
 # Be careful editing this, coregui must come before ImGui. I thought the order

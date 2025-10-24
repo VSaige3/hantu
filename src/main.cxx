@@ -2,10 +2,12 @@
 
 #include <gui_bootstrap.hxx>
 #include <layer_imgui.hxx>
+#include "hantu.hxx"
 
 int main() {
-    gui_app hantu;
+    gui_app han;
 
-    hantu.layers.emplace_back(std::make_unique<layer_imgui>());
-    hantu.run("Hantu");
+    han.layers.emplace_back(std::make_unique<layer_imgui>());
+    han.layers.emplace_back(std::make_unique<hantu>());
+    han.run("Hantu");
 }
