@@ -2,6 +2,8 @@
 #include <imgui.h>
 #include <common/int.h>
 
+#include "imgui_utils.hxx"
+
 namespace ed = ax::NodeEditor;
 
 void hantu::init(GLFWwindow* window) {
@@ -9,7 +11,21 @@ void hantu::init(GLFWwindow* window) {
 }
 
 void hantu::update(GLFWwindow* window) {
-    ImGui::ShowDemoWindow(&demo_window_active);
+    if (ImGui::BeginTitleBar()) {
+        if (ImGui::BeginMenu("File")) {
+            ImGui::MenuItem("Load SSB", "Ctrl-L");
+            ImGui::EndMenu();
+        }
+        if (ImGui::BeginMenu("Window")) {
+            ImGui::MenuItem("Demo Window", nullptr, &show_demo_window);
+            ImGui::EndMenu();
+        }
+        ImGui::EndTitleBar();
+    }
+
+    if (show_demo_window) {
+        ImGui::ShowDemoWindow(&show_demo_window);
+    }
 
     ImGui::Begin("Test Editor"); {
         ed::SetCurrentEditor(editor); {

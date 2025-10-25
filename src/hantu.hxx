@@ -4,7 +4,7 @@
 struct hantu : gui_layer {
     ax::NodeEditor::EditorContext* editor = nullptr;
 
-    bool demo_window_active = true;
+    bool show_demo_window = false;
 
     void init(GLFWwindow* window) override;
 
