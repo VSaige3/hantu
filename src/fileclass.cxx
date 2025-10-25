@@ -5,6 +5,10 @@
 #include <common/logging.h>
 
 bool fileclass::load(const char* path) noexcept {
+    if (data) {
+        unload();
+    }
+
     size = file_size(path);
     if (!size) {
         return false;
@@ -20,6 +24,7 @@ bool fileclass::load(const char* path) noexcept {
         return false;
     }
 
+    filename = path;
     return true;
 }
 

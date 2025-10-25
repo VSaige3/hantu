@@ -1,8 +1,10 @@
 #pragma once
+#include <string>
 #include <common/int.h>
 #include <common/vfile.h>
 
 struct fileclass {
+    std::string filename;
     u8* data = nullptr;
     u32 size = 0;
 

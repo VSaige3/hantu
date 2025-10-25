@@ -11,6 +11,7 @@ struct hantu : gui_layer {
         ssb_header* get_header();
         u32* get_bytecode();
         ssb_func_entry* func_table();
+        u32 num_functions();
         char* string_pool();
 
         bool load_verify() const noexcept override;

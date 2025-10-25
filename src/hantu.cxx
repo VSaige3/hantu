@@ -23,6 +23,12 @@ ssb_func_entry* hantu::ssb_file::func_table() {
     return (ssb_func_entry*)(data + header->func_table_addr);
 }
 
+u32 hantu::ssb_file::num_functions() {
+    const auto func_ptr = (intptr_t)func_table();
+    const auto string_ptr = (intptr_t)string_pool();
+    return std::abs(string_ptr - func_ptr) / sizeof(ssb_func_entry);
+}
+
 char* hantu::ssb_file::string_pool() {
     const auto* header = (ssb_header*)data;
     return (char*)(data + header->string_pool_ptr);
@@ -96,6 +102,16 @@ void hantu::update(GLFWwindow* window) {
     if (!ssb.data) {
         return;
     }
+
+    ImGui::Begin(ssb.filename.c_str()); {
+        const ssb_func_entry* functions = ssb.func_table();
+        for (u32 i = 0; i < ssb.num_functions(); i++) {
+            const ssb_func_entry& entry = functions[i];
+            decoded_text name = decode_text(entry);
+            ImGui::Text("%s @ 0x%X", name.data, entry.func_offset);
+        }
+    }
+    ImGui::End();
 }
 
 void hantu::init(GLFWwindow* window) {
