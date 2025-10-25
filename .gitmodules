@@ -8,3 +8,6 @@
 	path = lib/imgui
 	url = https://github.com/ocornut/imgui
 	branch = docking
+[submodule "lib/imgui_node_editor"]
+	path = lib/imgui_node_editor
+	url = https://github.com/thedmd/imgui-node-editor
