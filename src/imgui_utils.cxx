@@ -24,8 +24,8 @@ bool BeginTitleBar(const char* id) {
     const float height = ImGui::GetFrameHeight();
     const ImGuiWindowFlags flags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_MenuBar;
 
-    bool active = ImGui::BeginViewportSideBar("MainMenu", viewport, ImGuiDir_Up, height, flags);
-    active |= ImGui::BeginMenuBar();
+    bool active = ImGui::BeginViewportSideBar(id, viewport, ImGuiDir_Up, height, flags);
+    active &= ImGui::BeginMenuBar();
 
     return active;
 }
@@ -33,6 +33,10 @@ bool BeginTitleBar(const char* id) {
 void EndTitleBar() {
     ImGui::EndMenuBar();
     ImGui::End();
+}
+
+float CharWidth() {
+    return ImGui::CalcTextSize("1").x;
 }
 
 void PlsReportIf(bool condition, const char* format, ...) {
@@ -62,18 +66,16 @@ bool InputPDString(const char* label, u32* text1, u32* text2) {
         return false;
     }
 
-    u8 size = ENCODED_CHAR_COUNT;
+    // Length doubles when we have 2 values
+    const u8 size = (text2) ? ENCODED_CHAR_COUNT * 2 : ENCODED_CHAR_COUNT;
     decoded_text buf = {0};
     decode_single32(buf.data, *text1);
     if (text2 != nullptr) {
         // Also decode the next value
         decode_single32(&buf.data[ENCODED_CHAR_COUNT], *text2);
-
-        // With a second value, we can store twice as many characters.
-        size *= 2;
     }
 
-    ImGui::SetNextItemWidth(ImGui::CalcTextSize("1").x * (size + 8));
+    ImGui::SetNextItemWidth(ImGui::CharWidth() * (size + 8));
 
     // TODO: Look into using a character filter callback to only allow the
     // characters that can be encoded.
@@ -91,14 +93,11 @@ bool InputPDString(const char* label, u32* text1, u32* text2) {
 }
 
 void PDString(u32 text1, u32 text2) {
-    u8 size = ENCODED_CHAR_COUNT;
-    decoded_text buf = decode_double(text1, text2);
-    if (text2 != 0) {
-        // With a second value, we can store twice as many characters.
-        size *= 2;
-    }
+    const decoded_text buf = decode_double(text1, text2);
+    // Length doubles when we have 2 values
+    const u8 size = (text2) ? ENCODED_CHAR_COUNT * 2 : ENCODED_CHAR_COUNT;
 
-    ImGui::SetNextItemWidth(ImGui::CalcTextSize("1").x * (size + 8));
+    ImGui::SetNextItemWidth(ImGui::CharWidth() * (size + 8));
     ImGui::Text("%s", buf.data);
 }
 } // namespace ImGui
