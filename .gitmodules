@@ -11,3 +11,6 @@
 [submodule "lib/imgui_node_editor"]
 	path = lib/imgui_node_editor
 	url = https://github.com/thedmd/imgui-node-editor
+[submodule "lib/nfde"]
+	path = lib/nfde
+	url = https://github.com/btzy/nativefiledialog-extended

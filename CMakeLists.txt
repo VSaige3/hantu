@@ -35,16 +35,19 @@ include_directories(lib/imgui lib/imgui_node_editor lib/bobtail)
 set(COREGUI_USE_IMGUI ON)
 add_subdirectory(lib/coregui)
 add_subdirectory(lib/bobtail)
+add_subdirectory(lib/nfde)
 
 add_executable(hantu
     src/main.cxx
     src/hantu.cxx
-    src/imgui_utils.cxx
     src/pd_common.c
     src/ssb.c
+
+    src/imgui_utils.cxx
+    src/fileclass.cxx
 )
 
 # Be careful editing this, coregui must come before ImGui. I thought the order
 # didn't matter, but it apparently does. Basically, coregui has a source file
 # dependent on ImGui, but we provide the copy of ImGui.
-target_link_libraries(hantu PUBLIC coregui imgui imgui_node_editor bobtail)
+target_link_libraries(hantu PUBLIC coregui imgui imgui_node_editor bobtail nfd)
