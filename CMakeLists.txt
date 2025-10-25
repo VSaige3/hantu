@@ -47,4 +47,4 @@ add_executable(hantu
 # Be careful editing this, coregui must come before ImGui. I thought the order
 # didn't matter, but it apparently does. Basically, coregui has a source file
 # dependent on ImGui, but we provide the copy of ImGui.
-target_link_libraries(hantu PUBLIC coregui imgui imgui_node_editor)
+target_link_libraries(hantu PUBLIC coregui imgui imgui_node_editor bobtail)
