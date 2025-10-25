@@ -107,7 +107,7 @@ void hantu::update(GLFWwindow* window) {
         const ssb_func_entry* functions = ssb.func_table();
         for (u32 i = 0; i < ssb.num_functions(); i++) {
             const ssb_func_entry& entry = functions[i];
-            decoded_text name = decode_text(entry);
+            decoded_text name = decode_double(entry.text1, entry.text2);
             ImGui::Text("%s @ 0x%X", name.data, entry.func_offset);
         }
     }

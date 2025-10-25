@@ -57,8 +57,6 @@ typedef struct {
 } ssb_func_entry;
 static_assert(sizeof(ssb_func_entry) == 0xC, "Wrong SSB function entry size!");
 
-decoded_text decode_text(ssb_func_entry val);
-
 #ifdef __cplusplus
 }
 #endif

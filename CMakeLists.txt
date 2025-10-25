@@ -41,7 +41,6 @@ add_executable(hantu
     src/main.cxx
     src/hantu.cxx
     src/pd_common.c
-    src/ssb.c
 
     src/imgui_utils.cxx
     src/fileclass.cxx
