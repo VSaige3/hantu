@@ -42,13 +42,34 @@ typedef enum {
     FUNC_TABLE_CALL = 0x01,
     THROW = 0x02,
     CALL = 0x03,
-    UNK_NATIVE = 0x04,
+    EXTERNAL_CALL = 0x04, // Not well understood, probably calls a function in another file idk
     RETURN = 0x05,
-    STACK_PUSH = 0x06,
+    STACK_EXTEND = 0x06,
     COND_JMP = 0x07,
-    COND_JMP_POP = 0x08,
-    IDX_PUSH = 0x09,
+    SWITCH_CASE = 0x08,
+    PUSH_LOCAL = 0x09,
+    POP_LOCAL = 0x0A,
+    STACK_DELETE = 0x0D,
+    PUSH_W = 0x0E,
+    PUSH_DW = 0x0F,
+    PUSH_RETURN = 0x10,
+    PUSH_STR = 0x11,
+    ADD = 0x12,
+    SUB = 0x13,
+    MULT = 0x14,
+    DIV = 0x15,
+    MOD = 0x16,
+    CMP = 0x17,
+    AND = 0x18, // bitwise operations below
+    OR = 0x19,
+    XOR = 0x1A,
+    BITWISE_NOT = 0x1B, // ~x
+    NEGATE = 0x1C, // -x
+    LOGICAL_NOT = 0x1D, // !x
+    SHIFT = 0x1E, // variety of bit shifts
+    LEA = 0x1F, // pointer to an offset from this instruction (for now assume it always gets data)
 } ssb_opcode;
+
 
 typedef struct {
     u32 text1;
@@ -58,6 +79,7 @@ typedef struct {
 static_assert(sizeof(ssb_func_entry) == 0xC, "Wrong SSB function entry size!");
 
 decoded_text decode_text(ssb_func_entry val);
+
 
 #ifdef __cplusplus
 }
