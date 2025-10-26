@@ -8,6 +8,8 @@
 void str_format_append(std::string& output, const char* format_str, ...);
 
 /// @brief Define an explcitly sized variant of ImGui::InputScalar()
+/// @param T Type name to use in the function and enum name (e.g. U8)
+/// @param U Type name to use for arguments (e.g. uint8_t)
 #define IMPL_IMGUI_SCALAR_INPUT(T, U)                                                            \
 static bool Input##T(const char* label, U* data, U step, U step_fast,                            \
                      const char* format, ImGuiInputTextFlags flags) {                            \
@@ -15,7 +17,14 @@ static bool Input##T(const char* label, U* data, U step, U step_fast,           
 }                                                                                                \
 
 namespace ImGui {
+    /// @brief Creates a Windows-style menu bar at the top of the screen
+    ///
+    /// This is a BeginViewportSideBar() & BeginMenuBar wrapper.
+    /// @param id ID to use for BeginViewportSideBar().
+    /// @return BeginViewportSideBar() && BeginMenuBar()
     bool BeginTitleBar(const char* id = "MainMenuBar");
+
+    /// @brief Ends the menu bar
     void EndTitleBar();
 
     /// @brief A sort of backwards assert that displays a message in the GUI
@@ -27,7 +36,7 @@ namespace ImGui {
     /// @param ... Format string arguments
     void PlsReportIf(bool condition, const char* format, ...);
 
-    /// @brief Text input box for a Phantom Dust encoded string
+    /// @brief ImGui::InputText() for a Phantom Dust encoded string
     ///
     /// This is for the Phantom Dust text format that encodes 6 characters into
     /// a 32-bit integer. It's commonly used in SSB and ALR files.
@@ -37,6 +46,7 @@ namespace ImGui {
     /// @return Whether the text was edited
     bool InputPDString(const char* label, u32* text1, u32* text2 = nullptr);
 
+    /// @brief ImGui::Text() for a Phantom Dust encoded string
     void PDString(u32 text1, u32 text2 = 0);
 
     // Define ImGui::InputScalar() variants with explicit sizes

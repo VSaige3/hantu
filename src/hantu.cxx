@@ -44,11 +44,16 @@ bool hantu::ssb_file::load_verify() const noexcept {
 }
 
 void do_title_bar(hantu& han) {
-    const bool ctrl_pressed = ImGui::IsKeyDown(ImGuiKey_LeftCtrl) || ImGui::IsKeyDown(ImGuiKey_RightCtrl);
-    bool load_ssb = ctrl_pressed && ImGui::IsKeyPressed(ImGuiKey_L, false);
+    const bool ctrl = ImGui::IsKeyDown(ImGuiKey_LeftCtrl) || ImGui::IsKeyDown(ImGuiKey_RightCtrl);
+    const bool shift = ImGui::IsKeyDown(ImGuiKey_LeftShift) || ImGui::IsKeyDown(ImGuiKey_RightShift);
+    bool load_ssb = ctrl && ImGui::IsKeyPressed(ImGuiKey_L, false);
+    bool save_ssb = ctrl && ImGui::IsKeyPressed(ImGuiKey_S, false);
+    bool save_as_ssb = ctrl &&shift && ImGui::IsKeyPressed(ImGuiKey_S, false);
     if (ImGui::BeginTitleBar()) {
         if (ImGui::BeginMenu("File")) {
             load_ssb |= ImGui::MenuItem("Load SSB", "Ctrl-L");
+            save_ssb |= ImGui::MenuItem("Save SSB", "Ctrl-S");
+            save_as_ssb |= ImGui::MenuItem("Save SSB As", "Ctrl-Shift-S");
             ImGui::EndMenu();
         }
         if (ImGui::BeginMenu("Window")) {
@@ -67,6 +72,21 @@ void do_title_bar(hantu& han) {
             han.ssb.load(path);
         }
         free(path);
+    }
+
+    if (save_as_ssb) {
+        char* path = nullptr;
+        const nfdu8filteritem_t filters[] = { { "Script Binary", "ssb"} };
+        const char* default_path = han.ssb.filename.c_str();
+        nfdresult_t result = NFD_SaveDialogU8(&path, filters, ARRAY_SIZE(filters), default_path, nullptr);
+        if (result == NFD_OKAY && path != nullptr) {
+            han.ssb.save(path);
+        }
+        free(path);
+    }
+
+    if (save_ssb) {
+        han.ssb.save(han.ssb.filename.c_str());
     }
 }
 
@@ -107,7 +127,7 @@ void hantu::update(GLFWwindow* window) {
         const ssb_func_entry* functions = ssb.func_table();
         for (u32 i = 0; i < ssb.num_functions(); i++) {
             const ssb_func_entry& entry = functions[i];
-            decoded_text name = decode_text(entry);
+            decoded_text name = decode_double(entry.text1, entry.text2);
             ImGui::Text("%s @ 0x%X", name.data, entry.func_offset);
         }
     }
