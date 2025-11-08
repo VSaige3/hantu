@@ -104,22 +104,16 @@ void str_opcode(const u32 *op, char *buff) {
             else
                 snprintf(buff, MAX_STR_OPCODE - 1, "MOD (b-a)");
             break;
-        case CMP:
-            const char *operator_;
-            switch(argument) {
-                case 0: operator_ = "=="; break;
-                case 1: operator_ = "!="; break;
-                case 2: operator_ = ">"; break;
-                case 3: operator_ = "<"; break;
-                case 4: operator_ = ">="; break;
-                case 5: operator_ = "<="; break;
-                default: operator_ = "flags"; break;
-            }
-            if (modifier)
-                snprintf(buff, MAX_STR_OPCODE - 1, "TEST (a %s b)", operator_);
-            else
-                snprintf(buff, MAX_STR_OPCODE - 1, "TEST (b %s a)", operator_);
+        case CMP: {
+            const char* operators[] = {"==", "!=", ">", "<", ">=", "<=", "flags"};
+            const u32 idx = MAX(argument, ARRAY_SIZE(operators) - 1);
+            const char *Operator = operators[idx];
+
+            const char* fmt = (modifier) ? "TEST (a %s b)" : "TEST (b %s a)";
+            snprintf(buff, MAX_STR_OPCODE - 1, fmt, Operator);
             break;
+        }
+
         case AND:
             snprintf(buff, MAX_STR_OPCODE - 1, "AND");
             break;
@@ -138,18 +132,15 @@ void str_opcode(const u32 *op, char *buff) {
         case LOGICAL_NOT:
             snprintf(buff, MAX_STR_OPCODE - 1, "NOT(!)");
             break;
-        case SHIFT:
-            const char *operator__;
-            switch(argument) {
-                case 1: operator__ = "ASHR"; break;
-                case 2: operator__ = "SHR"; break; // logical (unsigned)
-                default: operator__ = "SHL"; break;
-            }
-            if (modifier)
-                snprintf(buff, MAX_STR_OPCODE - 1, "%s (a <> b)", operator__);
-            else
-                snprintf(buff, MAX_STR_OPCODE - 1, "%s (b <> a)", operator__);
-            break;
+        case SHIFT: {
+            // SHR is logical unsigned
+            const char* operators[] = {"ASHR", "SHR", "SHL"};
+            const u32 idx = MAX(argument, ARRAY_SIZE(operators) - 1);
+            const char *Operator = operators[idx];
+
+            const char* fmt = (modifier) ? "%s (a <> b)" : "%s (b <> a)";
+            snprintf(buff, MAX_STR_OPCODE - 1, fmt, Operator);
+        }
         case LEA:
             snprintf(buff, MAX_STR_OPCODE - 1, "LEA %+d", sargument);
             break;
@@ -330,6 +321,7 @@ void DecompNode::generate_title_text() {
             this->title_text = this->data.empty_node_name;
             break;
         case FUNCTIONAL_NODE:
+            // FIXME: We're leaking this
             this->title_text = (char *)malloc(MAX_STR_OPCODE);
             str_opcode(this->data.instr_pointer, this->title_text);
             break;
@@ -337,8 +329,12 @@ void DecompNode::generate_title_text() {
             this->title_text = this->data.str_pointer;
             break;
         case STACKVAR_NODE:
+            // FIXME: We're leaking this
             this->title_text = (char *)malloc(MAX_STR_OPCODE);
             str_stackvar(this->data.local_stackpos, this->title_text);
+            break;
+        case DATA_NODE:
+            // TODO: Implement this
             break;
     }
 }
