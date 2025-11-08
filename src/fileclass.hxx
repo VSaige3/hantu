@@ -2,6 +2,7 @@
 #include <string>
 #include <common/int.h>
 #include <common/vfile.h>
+#include "ssb.h"
 
 struct fileclass {
     std::string filename;
@@ -25,3 +26,16 @@ struct fileclass {
 
     ~fileclass() noexcept;
 };
+
+
+
+struct ssb_file : fileclass {
+    ssb_header* get_header();
+    u32* get_bytecode();
+    ssb_func_entry* func_table();
+    u32 num_functions();
+    char* string_pool();
+
+    bool load_verify() const noexcept override;
+};
+

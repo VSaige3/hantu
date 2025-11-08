@@ -9,40 +9,6 @@
 
 namespace ed = ax::NodeEditor;
 
-ssb_header* hantu::ssb_file::get_header() {
-    return (ssb_header*)data;
-}
-
-u32* hantu::ssb_file::get_bytecode() {
-    auto* header = (ssb_header*)data;
-    return &header->instructions[0];
-}
-
-ssb_func_entry* hantu::ssb_file::func_table() {
-    const auto* header = (ssb_header*)data;
-    return (ssb_func_entry*)(data + header->func_table_addr);
-}
-
-u32 hantu::ssb_file::num_functions() {
-    const auto func_ptr = (intptr_t)func_table();
-    const auto string_ptr = (intptr_t)string_pool();
-    return std::abs(string_ptr - func_ptr) / sizeof(ssb_func_entry);
-}
-
-char* hantu::ssb_file::string_pool() {
-    const auto* header = (ssb_header*)data;
-    return (char*)(data + header->string_pool_ptr);
-}
-
-bool hantu::ssb_file::load_verify() const noexcept {
-    const auto* header = (ssb_header*)data;
-    bool passed = true;
-    passed &= header->header_size == sizeof(*header);
-    passed &= header->string_pool_ptr == header->string_pool_ptr2;
-
-    return passed;
-}
-
 void do_title_bar(hantu& han) {
     const bool ctrl = ImGui::IsKeyDown(ImGuiKey_LeftCtrl) || ImGui::IsKeyDown(ImGuiKey_RightCtrl);
     const bool shift = ImGui::IsKeyDown(ImGuiKey_LeftShift) || ImGui::IsKeyDown(ImGuiKey_RightShift);
@@ -90,6 +56,8 @@ void do_title_bar(hantu& han) {
     }
 }
 
+bool first_frame = false;
+
 void hantu::update(GLFWwindow* window) {
     do_title_bar(*this);
 
@@ -100,18 +68,20 @@ void hantu::update(GLFWwindow* window) {
     ImGui::Begin("Test Editor"); {
         ed::SetCurrentEditor(editor); {
             ed::Begin("Node Editor", ImVec2()); {
-                u32 id = 1;
-                // Start drawing nodes.
-                ed::BeginNode(id++);
-                    ImGui::Text("Node A");
-                    ed::BeginPin(id++, ed::PinKind::Input);
-                        ImGui::Text("-> In");
-                    ed::EndPin();
-                    ImGui::SameLine();
-                    ed::BeginPin(id++, ed::PinKind::Output);
-                        ImGui::Text("Out ->");
-                    ed::EndPin();
-                ed::EndNode();
+                u32 id = 10;
+
+                if (decompiler) {
+                    decompiler->render_all_nodes(&id);
+                }
+
+                if (first_frame && decompiler) {
+                    ImVec2 v = ImVec2();
+                    decompiler->FunctionDecompiler::space_nodes(id, v);
+                    ed::NavigateToContent(0.5f);
+                }
+
+                first_frame = false;
+
             }
             ed::End();
         }
@@ -125,10 +95,24 @@ void hantu::update(GLFWwindow* window) {
 
     ImGui::Begin(ssb.filename.c_str()); {
         const ssb_func_entry* functions = ssb.func_table();
+        char label[32];
         for (u32 i = 0; i < ssb.num_functions(); i++) {
             const ssb_func_entry& entry = functions[i];
             decoded_text name = decode_double(entry.text1, entry.text2);
-            ImGui::Text("%s @ 0x%X", name.data, entry.func_offset);
+            snprintf(label, 31, "%s @ 0x%X", name.data, entry.func_offset);
+            if (ImGui::Selectable(label)) {
+                if (selected_function != &entry) {
+                    printf("Selected func %s @ 0x%X\n", name.data, entry.func_offset);
+                    selected_function = &entry;
+                    if (this->decompiler) free(this->decompiler);
+                    this->decompiler = new FunctionDecompiler(entry.func_offset, &this->ssb);
+                    if (!(this->decompiler->FunctionDecompiler::decompile(-1))) {
+                        printf("Error: %s", str_decomp_error(this->decompiler->FunctionDecompiler::get_last_error()));
+                        this->destroy();
+                    }
+                    first_frame = true;
+                }
+            }
         }
     }
     ImGui::End();

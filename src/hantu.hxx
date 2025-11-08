@@ -3,22 +3,17 @@
 
 #include "fileclass.hxx"
 #include "ssb.h"
+#include "decompiler.hxx"
 
 struct hantu : gui_layer {
     // Fileclass handles loading/saving
-    struct ssb_file : fileclass {
-
-        ssb_header* get_header();
-        u32* get_bytecode();
-        ssb_func_entry* func_table();
-        u32 num_functions();
-        char* string_pool();
-
-        bool load_verify() const noexcept override;
-    };
-
+    
     // TODO: Make this a vector, with each file having a window
     ssb_file ssb;
+
+    FunctionDecompiler *decompiler = nullptr;
+
+    const ssb_func_entry *selected_function = nullptr;
 
     ax::NodeEditor::EditorContext* editor = nullptr;
 

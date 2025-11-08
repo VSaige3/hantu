@@ -54,3 +54,38 @@ bool fileclass::save(const char* path) const noexcept {
 fileclass::~fileclass() noexcept {
     free(data);
 }
+
+
+ssb_header* ssb_file::get_header() {
+    return (ssb_header*)data;
+}
+
+u32* ssb_file::get_bytecode() {
+    auto* header = (ssb_header*)data;
+    return &header->instructions[0];
+}
+
+ssb_func_entry* ssb_file::func_table() {
+    const auto* header = (ssb_header*)data;
+    return (ssb_func_entry*)(data + header->func_table_addr);
+}
+
+u32 ssb_file::num_functions() {
+    const auto func_ptr = (intptr_t)func_table();
+    const auto string_ptr = (intptr_t)string_pool();
+    return std::abs(string_ptr - func_ptr) / sizeof(ssb_func_entry);
+}
+
+char* ssb_file::string_pool() {
+    const auto* header = (ssb_header*)data;
+    return (char*)(data + header->string_pool_ptr);
+}
+
+bool ssb_file::load_verify() const noexcept {
+    const auto* header = (ssb_header*)data;
+    bool passed = true;
+    passed &= header->header_size == sizeof(*header);
+    passed &= header->string_pool_ptr == header->string_pool_ptr2;
+
+    return passed;
+}
