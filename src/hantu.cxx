@@ -70,7 +70,7 @@ void hantu::update(GLFWwindow* window) {
             ed::Begin("Node Editor", ImVec2()); {
                 u32 id = 10;
 
-                decompiler.render_all_nodes(&id);
+                decompiler.render_all_nodes(id);
 
                 if (first_frame) {
                     ImVec2 v = ImVec2();
