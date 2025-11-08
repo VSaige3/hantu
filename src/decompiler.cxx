@@ -398,13 +398,12 @@ s32 DecompNode::get_branch_offset() const {
     return branch_offset;
 }
 
-FunctionDecompiler::FunctionDecompiler(u32 entry_offset, ssb_file *file) {
+FunctionDecompiler::FunctionDecompiler(u32 entry_offset) {
     this->entry_offset = entry_offset;
-    this->file = file;
 }
 
 
-bool FunctionDecompiler::get_matching_node(decomp_node_data_t other, DECOMP_NODE_TYPE node_type, u32 *index_out) {
+bool FunctionDecompiler::get_matching_node(decomp_node_data_t other, DECOMP_NODE_TYPE node_type, u32 *index_out) const {
     for (u32 index = 0; index < nodes.size(); index ++) {
         if (this->nodes[index]->is_same_node(other, node_type)) {
             if (index_out) *index_out = index;
@@ -494,8 +493,8 @@ bool FunctionDecompiler::push_back_nodes_recursive(int param_hint, u32 last_node
     return good;
 }
 
-bool FunctionDecompiler::push_back_nodes(int params_hint) {
-    this->nodes.push_back(DecompNode::from_instr(&this->file->get_bytecode()[this->entry_offset - 8]));
+bool FunctionDecompiler::push_back_nodes(int params_hint, u32* bytecode) {
+    nodes.push_back(DecompNode::from_instr(&bytecode[entry_offset - 8]));
     bool success = push_back_nodes_recursive(params_hint, 0, 0);
     return success;
 }
@@ -543,21 +542,21 @@ bool FunctionDecompiler::recursive_layout_nodes(u32 last_index, u32 new_level, u
     return true;
 }
 
-bool FunctionDecompiler::create_node_layout(int params_hint) {
-    visual_distance.resize(nodes.size(), 0);
-    visual_levels.resize(nodes.size(), 0);
+bool FunctionDecompiler::create_node_layout() {
+    visual_distance.resize(nodes.size());
+    visual_levels.resize(nodes.size());
     return recursive_layout_nodes(0, 0, 0);
     // now every (forward) branch go to the branch and set all following to a higher level
     // if there is another later branch that jumps to it, put it there ig?
 }
 
-bool FunctionDecompiler::decompile(int params_hint) {
+bool FunctionDecompiler::decompile(int params_hint, u32* bytecode) {
     decomp_error = 0;
     links.clear();
     nodes.clear();
     visual_distance.clear();
     visual_levels.clear();
-    bool result = push_back_nodes(params_hint);
+    bool result = push_back_nodes(params_hint, bytecode);
     result &= create_node_layout(params_hint);
     result &= process_stack(params_hint);
     return result;

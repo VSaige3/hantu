@@ -102,8 +102,8 @@ void hantu::update(GLFWwindow* window) {
                 if (selected_function != &entry) {
                     printf("Selected func %s @ 0x%X\n", name.data, entry.func_offset);
                     selected_function = &entry;
-                    this->decompiler = FunctionDecompiler(entry.func_offset, &this->ssb);
-                    if (!(this->decompiler.decompile(-1))) {
+                    this->decompiler = FunctionDecompiler(entry.func_offset);
+                    if (!(this->decompiler.decompile(-1, ssb.get_bytecode()))) {
                         printf("Error: %s", str_decomp_error(this->decompiler.get_last_error()));
                         this->destroy();
                     }

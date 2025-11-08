@@ -11,7 +11,7 @@ struct hantu : gui_layer {
     // TODO: Make this a vector, with each file having a window
     ssb_file ssb;
 
-    FunctionDecompiler decompiler = FunctionDecompiler(0, &this->ssb);
+    FunctionDecompiler decompiler = FunctionDecompiler(0);
 
     const ssb_func_entry *selected_function = nullptr;
 

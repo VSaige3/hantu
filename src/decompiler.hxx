@@ -135,21 +135,23 @@ class DecompNode {
 class FunctionDecompiler {
     private:
         u32 entry_offset;
-        ssb_file *file;
         std::vector<DecompNode *> nodes;
         std::vector<u32> visual_levels; // y positions
         std::vector<u32> visual_distance; // x positions
         std::vector<link_info*> links;
+
+        // TODO: Can we have methods return an error directly?
         int decomp_error = 0;
-        bool push_back_nodes(int params_hint);
+
+        bool push_back_nodes(int params_hint, u32* bytecode);
         bool push_back_nodes_recursive(int param_hint, u32 last_node_id, u32 last_link_id);
-        bool create_node_layout(int params_hint);
-        bool recursive_layout_nodes(u32, u32, u32);
+        bool create_node_layout();
+        bool recursive_layout_nodes(u32 last_index, u32 new_level, u32 new_distance);
         bool process_stack(int params_hint);
-        bool get_matching_node(decomp_node_data_t other, DECOMP_NODE_TYPE node_type, u32 *index_out);
+        bool get_matching_node(decomp_node_data_t other, DECOMP_NODE_TYPE node_type, u32 *index_out) const;
     public:
-        FunctionDecompiler(u32 entry_offset, ssb_file *file);
-        bool decompile(int params_hint);
+        FunctionDecompiler(u32 entry_offset);
+        bool decompile(int params_hint, u32* bytecode);
         int get_last_error();
         bool render_all_nodes(u32 starting_id);
         void space_nodes(u32 starting_id, ImVec2 initial_pos);
