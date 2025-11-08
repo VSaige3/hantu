@@ -553,7 +553,7 @@ bool FunctionDecompiler::decompile(int params_hint, u32* bytecode) {
     visual_distance.clear();
     visual_levels.clear();
     bool result = push_back_nodes(params_hint, bytecode);
-    result &= create_node_layout(params_hint);
+    result &= create_node_layout();
     result &= process_stack(params_hint);
     return result;
 }
