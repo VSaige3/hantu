@@ -70,13 +70,11 @@ void hantu::update(GLFWwindow* window) {
             ed::Begin("Node Editor", ImVec2()); {
                 u32 id = 10;
 
-                if (decompiler) {
-                    decompiler->render_all_nodes(&id);
-                }
+                decompiler.render_all_nodes(id);
 
-                if (first_frame && decompiler) {
+                if (first_frame) {
                     ImVec2 v = ImVec2();
-                    decompiler->FunctionDecompiler::space_nodes(id, v);
+                    decompiler.space_nodes(id, v);
                     ed::NavigateToContent(0.5f);
                 }
 
@@ -104,10 +102,9 @@ void hantu::update(GLFWwindow* window) {
                 if (selected_function != &entry) {
                     printf("Selected func %s @ 0x%X\n", name.data, entry.func_offset);
                     selected_function = &entry;
-                    if (this->decompiler) free(this->decompiler);
-                    this->decompiler = new FunctionDecompiler(entry.func_offset, &this->ssb);
-                    if (!(this->decompiler->FunctionDecompiler::decompile(-1))) {
-                        printf("Error: %s", str_decomp_error(this->decompiler->FunctionDecompiler::get_last_error()));
+                    this->decompiler = FunctionDecompiler(entry.func_offset);
+                    if (!(this->decompiler.decompile(-1, ssb.get_bytecode()))) {
+                        printf("Error: %s", str_decomp_error(this->decompiler.get_last_error()));
                         this->destroy();
                     }
                     first_frame = true;

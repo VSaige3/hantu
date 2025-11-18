@@ -3,11 +3,11 @@
 
 namespace ed = ax::NodeEditor;
 
-char *str_opcode(u32 *op, char *buff) {
-    u8 opcode = *op & 0xFF;
-    u8 modifier = (*op >> 0x8) & 0xFF;
-    u16 argument = *op >> 0x10;
-    s16 sargument = (s16) argument;
+void str_opcode(const u32 *op, char *buff) {
+    const u8 opcode = *op & 0xFF;
+    const u8 modifier = (*op >> 0x8) & 0xFF;
+    const u16 argument = *op >> 0x10;
+    const s16 sargument = (s16) argument;
     switch (opcode) {
         case NOP:
             snprintf(buff, MAX_STR_OPCODE - 1, "NOP");
@@ -104,22 +104,16 @@ char *str_opcode(u32 *op, char *buff) {
             else
                 snprintf(buff, MAX_STR_OPCODE - 1, "MOD (b-a)");
             break;
-        case CMP:
-            const char *operator_;
-            switch(argument) {
-                case 0: operator_ = "=="; break;
-                case 1: operator_ = "!="; break;
-                case 2: operator_ = ">"; break;
-                case 3: operator_ = "<"; break;
-                case 4: operator_ = ">="; break;
-                case 5: operator_ = "<="; break;
-                default: operator_ = "flags"; break;
-            }
-            if (modifier)
-                snprintf(buff, MAX_STR_OPCODE - 1, "TEST (a %s b)", operator_);
-            else
-                snprintf(buff, MAX_STR_OPCODE - 1, "TEST (b %s a)", operator_);
+        case CMP: {
+            const char* operators[] = {"==", "!=", ">", "<", ">=", "<=", "flags"};
+            const u32 idx = MAX(argument, ARRAY_SIZE(operators) - 1);
+            const char *Operator = operators[idx];
+
+            const char* fmt = (modifier) ? "TEST (a %s b)" : "TEST (b %s a)";
+            snprintf(buff, MAX_STR_OPCODE - 1, fmt, Operator);
             break;
+        }
+
         case AND:
             snprintf(buff, MAX_STR_OPCODE - 1, "AND");
             break;
@@ -138,26 +132,22 @@ char *str_opcode(u32 *op, char *buff) {
         case LOGICAL_NOT:
             snprintf(buff, MAX_STR_OPCODE - 1, "NOT(!)");
             break;
-        case SHIFT:
-            const char *operator__;
-            switch(argument) {
-                case 1: operator__ = "ASHR"; break;
-                case 2: operator__ = "SHR"; break; // logical (unsigned)
-                default: operator__ = "SHL"; break;
-            }
-            if (modifier)
-                snprintf(buff, MAX_STR_OPCODE - 1, "%s (a <> b)", operator__);
-            else
-                snprintf(buff, MAX_STR_OPCODE - 1, "%s (b <> a)", operator__);
-            break;
+        case SHIFT: {
+            // SHR is logical unsigned
+            const char* operators[] = {"ASHR", "SHR", "SHL"};
+            const u32 idx = MAX(argument, ARRAY_SIZE(operators) - 1);
+            const char *Operator = operators[idx];
+
+            const char* fmt = (modifier) ? "%s (a <> b)" : "%s (b <> a)";
+            snprintf(buff, MAX_STR_OPCODE - 1, fmt, Operator);
+        }
         case LEA:
             snprintf(buff, MAX_STR_OPCODE - 1, "LEA %+d", sargument);
             break;
         default:
-            snprintf(buff, MAX_STR_OPCODE - 1, "UNRECOGNIZED OPCODE %X", op);
+            snprintf(buff, MAX_STR_OPCODE - 1, "UNRECOGNIZED OPCODE %X", *op);
             break;
     }
-    return buff;
 }
 
 const char *str_decomp_error(int err) {
@@ -175,6 +165,7 @@ const char *str_decomp_error(int err) {
     }
 }
 
+// TODO: Is this a hash function? Can we replace it with a normal one like crc32fast()? - torph
 u64 get_pin_index(bool is_input, u32 node_index, u16 connection_num) {
     return (((u64)is_input) | (((u64)connection_num) << 1) | (((u64)node_index) << 17)) ^ (u64)0x12345678ABCDEF;
 }
@@ -189,9 +180,9 @@ char *str_stackvar(int stackpos, char *buff) {
 }
 
 int get_num_var_in_from_opcode(u32 instr) {
-    u8 opcode = instr & 0xFF;
-    u8 modifier = (instr >> 0x8) & 0xFF;
-    u16 argument = instr >> 0x10;
+    const u8 opcode = instr & 0xFF;
+    const u8 modifier = (instr >> 0x8) & 0xFF;
+    const u16 argument = instr >> 0x10;
     switch (opcode) {
         case NOP:
         case THROW:
@@ -245,17 +236,17 @@ int get_num_var_in_from_opcode(u32 instr) {
     }
 }
 
-DecompNode * const DecompNode::from_instr(u32 * const instr_pointer) {
-    decomp_node_data_t d;
+DecompNode* DecompNode::from_instr(u32* instr_pointer) {
+    decomp_node_data_t d = {};
     d.instr_pointer = instr_pointer;
     DecompNode *node = new DecompNode(d, FUNCTIONAL_NODE);
-    u32 instr = *instr_pointer;
-    u8 opcode = instr & 0xFF;
-    u8 modifier = (instr >> 0x8) & 0xFF;
-    u16 argument = instr >> 0x10;
+    const u32 instr = *instr_pointer;
+    const u8 opcode = instr & 0xFF;
+    const u8 modifier = (instr >> 0x8) & 0xFF;
+    const u16 argument = instr >> 0x10;
     node->command_size = 1;
     node->_has_branch = false;
-    
+
     switch (opcode) {
         case NOP:
         case THROW:
@@ -320,7 +311,6 @@ DecompNode * const DecompNode::from_instr(u32 * const instr_pointer) {
 
 DecompNode::DecompNode(decomp_node_data_t data, DECOMP_NODE_TYPE node_type) {
     this->data = data;
-    this->title_text = NULL;
     this->node_type = node_type;
 }
 
@@ -331,6 +321,7 @@ void DecompNode::generate_title_text() {
             this->title_text = this->data.empty_node_name;
             break;
         case FUNCTIONAL_NODE:
+            // FIXME: We're leaking this
             this->title_text = (char *)malloc(MAX_STR_OPCODE);
             str_opcode(this->data.instr_pointer, this->title_text);
             break;
@@ -338,8 +329,12 @@ void DecompNode::generate_title_text() {
             this->title_text = this->data.str_pointer;
             break;
         case STACKVAR_NODE:
+            // FIXME: We're leaking this
             this->title_text = (char *)malloc(MAX_STR_OPCODE);
             str_stackvar(this->data.local_stackpos, this->title_text);
+            break;
+        case DATA_NODE:
+            // TODO: Implement this
             break;
     }
 }
@@ -352,9 +347,9 @@ char *DecompNode::get_title_text() {
 }
 
 bool DecompNode::render(u32 node_index) {
-    u64 pin_index_in = get_pin_index(true, node_index, 0);
-    u64 pin_index_out = get_pin_index(false, node_index, 0);
-    u64 pin_index_branch = get_pin_index(false, node_index, 1);
+    const u64 pin_index_in = get_pin_index(true, node_index, 0);
+    const u64 pin_index_out = get_pin_index(false, node_index, 0);
+    const u64 pin_index_branch = get_pin_index(false, node_index, 1);
     // u32 pin_index_in = node_index + 1;
     // u32 pin_index_out = ~(node_index + 1);
     // printf("Title %s\n", this->get_title_text());
@@ -378,39 +373,33 @@ bool DecompNode::render(u32 node_index) {
     return true;
 }
 
-bool DecompNode::is_same_node(decomp_node_data_t other, DECOMP_NODE_TYPE node_type) {
-    return other.data_ptr == this->data.data_ptr && this->node_type == node_type;
+bool DecompNode::is_same_node(decomp_node_data_t other, DECOMP_NODE_TYPE type) const {
+    return other.data_ptr == this->data.data_ptr && this->node_type == type;
 }
 
-int DecompNode::get_num_var_in() {
+int DecompNode::get_num_var_in() const {
     if (this->node_type != FUNCTIONAL_NODE) {
         return 0;
     }
     return get_num_var_in_from_opcode(*this->data.instr_pointer);
 }
 
-s32 DecompNode::get_command_size() {
+s32 DecompNode::get_command_size() const {
     return command_size;
 }
-bool DecompNode::has_branch() {
+bool DecompNode::has_branch() const {
     return _has_branch;
 }
-s32 DecompNode::get_branch_offset() {
+s32 DecompNode::get_branch_offset() const {
     return branch_offset;
 }
 
-FunctionDecompiler::FunctionDecompiler(u32 entry_offset, ssb_file *file) {
+FunctionDecompiler::FunctionDecompiler(u32 entry_offset) {
     this->entry_offset = entry_offset;
-    this->file = file;
-    this->decomp_error = 0;
-    this->links = {};
-    this->nodes = {};
-    visual_levels = {};
-    visual_distance = {};
 }
 
 
-bool FunctionDecompiler::get_matching_node(decomp_node_data_t other, DECOMP_NODE_TYPE node_type, u32 *index_out) {
+bool FunctionDecompiler::get_matching_node(decomp_node_data_t other, DECOMP_NODE_TYPE node_type, u32 *index_out) const {
     for (u32 index = 0; index < nodes.size(); index ++) {
         if (this->nodes[index]->is_same_node(other, node_type)) {
             if (index_out) *index_out = index;
@@ -427,13 +416,13 @@ bool FunctionDecompiler::push_back_nodes_recursive(int param_hint, u32 last_node
     }
     bool good = true;
     DecompNode *last_node = nodes[last_node_id];
-    decomp_node_data_t data;
-    bool nonterminal = last_node->get_command_size() > 0;
-    bool branches = last_node->has_branch();
+    decomp_node_data_t data = {};
+    const bool nonterminal = last_node->get_command_size() > 0;
+    const bool branches = last_node->has_branch();
     if (nonterminal) {
         u32 *next_instr_pointer = &last_node->data.instr_pointer[last_node->get_command_size()];
         data.instr_pointer = next_instr_pointer;
-        u32 index;
+        u32 index = 0;
         bool matching = get_matching_node(data, FUNCTIONAL_NODE, &index);
         if (!matching) {
             index = nodes.size();
@@ -452,7 +441,7 @@ bool FunctionDecompiler::push_back_nodes_recursive(int param_hint, u32 last_node
     if (branches) {
         u32 *branch_instr = &last_node->data.instr_pointer[last_node->get_branch_offset() + 1];
         data.instr_pointer = branch_instr;
-        u32 index;
+        u32 index = 0;
         bool matching = get_matching_node(data, FUNCTIONAL_NODE, &index);
         if (!matching) {
             index = nodes.size();
@@ -500,8 +489,8 @@ bool FunctionDecompiler::push_back_nodes_recursive(int param_hint, u32 last_node
     return good;
 }
 
-bool FunctionDecompiler::push_back_nodes(int params_hint) {
-    this->nodes.push_back(DecompNode::from_instr(&this->file->get_bytecode()[this->entry_offset - 8]));
+bool FunctionDecompiler::push_back_nodes(int params_hint, u32* bytecode) {
+    nodes.push_back(DecompNode::from_instr(&bytecode[entry_offset - 8]));
     bool success = push_back_nodes_recursive(params_hint, 0, 0);
     return success;
 }
@@ -514,8 +503,8 @@ bool create_link_from_info(link_info *info, u32 id_offset) {
     return ed::Link(info->id, get_pin_index(false, info->in_index + id_offset, info->connection_num_in), get_pin_index(true, info->out_index + id_offset, info->connection_num_out));
 }
 
-bool FunctionDecompiler::render_all_nodes(u32 *id_in) {
-    u32 id = *id_in;
+bool FunctionDecompiler::render_all_nodes(u32 starting_id) {
+    u32 id = starting_id;
     // printf("Rendering id starts %d\n", id);
     for (DecompNode *node : nodes) {
         if (!node->render(id)) return false;
@@ -523,7 +512,7 @@ bool FunctionDecompiler::render_all_nodes(u32 *id_in) {
     }
     
     for (link_info *info : links) {
-        create_link_from_info(info, *id_in);
+        create_link_from_info(info, starting_id);
     }
     return true;
 }
@@ -549,42 +538,42 @@ bool FunctionDecompiler::recursive_layout_nodes(u32 last_index, u32 new_level, u
     return true;
 }
 
-bool FunctionDecompiler::create_node_layout(int params_hint) {
-    visual_distance.resize(nodes.size(), 0);
-    visual_levels.resize(nodes.size(), 0);
+bool FunctionDecompiler::create_node_layout() {
+    visual_distance.resize(nodes.size());
+    visual_levels.resize(nodes.size());
     return recursive_layout_nodes(0, 0, 0);
     // now every (forward) branch go to the branch and set all following to a higher level
     // if there is another later branch that jumps to it, put it there ig?
 }
 
-bool FunctionDecompiler::decompile(int params_hint) {
-    this->decomp_error = 0;
-    this->links.clear();
-    this->nodes.clear();
+bool FunctionDecompiler::decompile(int params_hint, u32* bytecode) {
+    decomp_error = 0;
+    links.clear();
+    nodes.clear();
     visual_distance.clear();
     visual_levels.clear();
-    if (!this->push_back_nodes(params_hint)) return false;
-    if (!this->create_node_layout(params_hint)) return false;
-    if (!this->process_stack(params_hint)) return false;
-    return true;
+    bool result = push_back_nodes(params_hint, bytecode);
+    result &= create_node_layout();
+    result &= process_stack(params_hint);
+    return result;
 }
 
 
 int FunctionDecompiler::get_last_error() {
-    int last_err = this->decomp_error;
-    this->decomp_error = 0;
+    int last_err = decomp_error;
+    decomp_error = 0;
     return last_err;
 }
 
 
-void FunctionDecompiler::space_nodes(u32 starting_id, ImVec2 &initial_pos) {
+void FunctionDecompiler::space_nodes(u32 starting_id, ImVec2 initial_pos) {
     float max_x = 0.0f;
     float max_y = 0.0f;
-    float init_x = initial_pos.x;
-    float init_y = initial_pos.y;
+    const float init_x = initial_pos.x;
+    const float init_y = initial_pos.y;
     for (u32 i = 0; i < nodes.size(); i ++) {
-        float x = ((float)visual_levels[i]) * 400.0f;
-        float y = ((float)visual_distance[i]) * 100.0f; // + ((float)visual_levels[i]) * 10.0f;
+        const float x = float(visual_levels[i]) * 400.0f;
+        const float y = float(visual_distance[i]) * 100.0f; // + ((float)visual_levels[i]) * 10.0f;
         
         // float x = i * 400.0f;
         // float y = 0;

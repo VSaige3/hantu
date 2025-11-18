@@ -90,53 +90,73 @@ u64 get_pin_index(bool is_input, u32 node_index, u16 connection_num);
 
 class DecompNode {
     private:
-        DECOMP_NODE_TYPE node_type;
+        DECOMP_NODE_TYPE node_type = EMPTY_NODE;
+        char *title_text = nullptr;
+        std::vector<node_value_in*> input_names;
+        bool visible_control_in = false;
+        u64 cached_instr = 0;
+        s32 command_size = 0; // size in ints
+        bool _has_branch = false;
+        s32 branch_offset = 0;
+
         char *get_title_text();
         void generate_title_text();
-        char *title_text;
-        std::vector<node_value_in*> input_names;
-        bool visible_control_in; 
-        u64 cached_instr;
-        s32 command_size; // size in ints
-        bool _has_branch;
-        s32 branch_offset;
     public:
+        u32 branched_node_index = 0;
+        u32 next_node_index = 0;
+        decomp_node_data_t data = {};
+
+        /// @brief Render a node in the editor.
+        ///
+        /// @param node_index ID to use in ImGui
+        /// @return Always true
+        bool render(u32 node_index);
+
+        /// @brief Compare 2 nodes.
+        bool is_same_node(decomp_node_data_t other, DECOMP_NODE_TYPE type) const;
+        // TODO: ^ Can we make this an operator==()?
+
+        // number of stack variables this accepts
+        int get_num_var_in() const;
+
+        /// @brief Size (in units of 4 bytes) of the instruction(s) this node was created from
+        s32 get_command_size() const;
+
+        /// @brief Whether this node has a branch instruction
+        bool has_branch() const;
+
+        /// @brief The offset of the branch target, if applicable
+        s32 get_branch_offset() const;
+
         DecompNode(decomp_node_data_t data, DECOMP_NODE_TYPE node_type);
-        bool render(u32);
-        bool is_same_node(decomp_node_data_t other, DECOMP_NODE_TYPE node_type);
-        int get_num_var_in();   // number of stack variables this accepts
-        static DecompNode * const from_instr(u32 * const instr_pointer);
-        s32 get_command_size(); // size in ints
-        bool has_branch();
-        s32 get_branch_offset();
-        u32 branched_node_index;
-        u32 next_node_index;
-        decomp_node_data_t data;
+        static DecompNode* from_instr(u32* instr_pointer);
 };
 
 class FunctionDecompiler {
     private:
         u32 entry_offset;
-        ssb_file *file;
         std::vector<DecompNode *> nodes;
         std::vector<u32> visual_levels; // y positions
         std::vector<u32> visual_distance; // x positions
         std::vector<link_info*> links;
-        int decomp_error;   
-        bool push_back_nodes(int params_hint);
+
+        // TODO: Can we have methods return an error directly?
+        int decomp_error = 0;
+
+        bool push_back_nodes(int params_hint, u32* bytecode);
         bool push_back_nodes_recursive(int param_hint, u32 last_node_id, u32 last_link_id);
-        bool create_node_layout(int params_hint);
-        bool recursive_layout_nodes(u32, u32, u32);
+        bool create_node_layout();
+        bool recursive_layout_nodes(u32 last_index, u32 new_level, u32 new_distance);
         bool process_stack(int params_hint);
-        bool get_matching_node(decomp_node_data_t other, DECOMP_NODE_TYPE node_type, u32 *index_out);
+        bool get_matching_node(decomp_node_data_t other, DECOMP_NODE_TYPE node_type, u32 *index_out) const;
     public:
-        FunctionDecompiler(u32 entry_offset, ssb_file *file);
-        bool decompile(int params_hint);
+        FunctionDecompiler(u32 entry_offset);
+        bool decompile(int params_hint, u32* bytecode);
         int get_last_error();
-        bool render_all_nodes(u32 *);
-        void space_nodes(u32, ImVec2&);
+        bool render_all_nodes(u32 starting_id);
+        void space_nodes(u32 starting_id, ImVec2 initial_pos);
         ImVec2 bounds;
 };
 
-char *str_opcode(u32 *op, char *buff);
+void str_opcode(const u32 *op, char *buff);
 const char *str_decomp_error(int err);
