@@ -3,6 +3,7 @@
 #include <nfd.h>
 
 #include <common/int.h>
+#include <common/file.h>
 
 #include "imgui_utils.hxx"
 #include "ssb.h"
@@ -118,6 +119,15 @@ void hantu::update(GLFWwindow* window) {
 void hantu::init(GLFWwindow* window) {
     NFD_Init();
     editor = ed::CreateEditor();
+
+    const char* font_path = "font.ttf";
+    if (file_exists(font_path)) {
+        ImGuiIO& io = ImGui::GetIO();
+        ImFontConfig cfg;
+        cfg.MergeMode = true;
+        io.Fonts->AddFontFromFileTTF(font_path, 15.0f);
+        io.Fonts->AddFontFromFileTTF(font_path, 15.0f, &cfg, io.Fonts->GetGlyphRangesJapanese());
+    }
 }
 
 void hantu::destroy() {
