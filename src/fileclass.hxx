@@ -37,5 +37,13 @@ struct ssb_file : fileclass {
     char* string_pool();
 
     bool load_verify() const noexcept override;
+
+    // Used for editing strings in the string pool
+    std::string string_pool_input;
+
+    // The location in the string pool we're currently editing, if any
+    char* string_pool_edit_dest = nullptr;
+
+    // TODO: Add ability to expand the file, so we can do arbitrary length text edits
 };
 
