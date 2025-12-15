@@ -59,6 +59,22 @@ void do_title_bar(hantu& han) {
 
 bool first_frame = false;
 
+void do_string_editor(ssb_file& ssb) {
+    ImGui::Begin("Strings"); {
+        const void* end = ssb.data + ssb.size;
+        char* text = ssb.string_pool();
+
+        while (text < end) {
+            std::string label = "##" + std::to_string(uintptr_t(text));
+            const s32 buf_size = MAX(0, s32(strlen(text)) + 1);
+            const u32 height = ImGui::GetTextLineHeight() * 2;
+            ImGui::InputTextMultiline(label.c_str(), text, buf_size, ImVec2(0, height));
+            text = text + strlen(text) + 1;
+        }
+    }
+    ImGui::End();
+}
+
 void hantu::update(GLFWwindow* window) {
     do_title_bar(*this);
 
@@ -114,6 +130,8 @@ void hantu::update(GLFWwindow* window) {
         }
     }
     ImGui::End();
+
+    do_string_editor(ssb);
 }
 
 void hantu::init(GLFWwindow* window) {
