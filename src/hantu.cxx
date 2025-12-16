@@ -86,6 +86,13 @@ void do_string_editor(ssb_file& ssb) {
                     ssb.string_pool_input = "";
                     ssb.string_pool_edit_dest = nullptr;
                 }
+
+                ImGui::SameLine();
+                if (ImGui::Button("Cancel")) {
+                    // Reset.
+                    ssb.string_pool_input = "";
+                    ssb.string_pool_edit_dest = nullptr;
+                }
             } else {
                 std::string edit_label = "Edit" + label;
                 if (ImGui::Button(edit_label.c_str())) {
@@ -110,7 +117,7 @@ void hantu::update(GLFWwindow* window) {
         ImGui::ShowDemoWindow(&show_demo_window);
     }
 
-    ImGui::Begin("Test Editor"); {
+    ImGui::Begin("Node Editor"); {
         ed::SetCurrentEditor(editor); {
             ed::Begin("Node Editor", ImVec2()); {
                 u32 id = 10;
